@@ -1,0 +1,80 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.carely</groupId>
+        <artifactId>carely-api</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>jooq-generation</artifactId>
+    <dependencies>
+        <!-- Required by the generated Java classes -->
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jooq</groupId>
+                <artifactId>jooq-codegen-maven</artifactId>
+                <version>${jooq.version}</version>
+
+                <!-- PostgreSQL driver used while generating code -->
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                </dependencies>
+
+                <executions>
+                    <execution>
+                        <id>generate-jooq</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+
+                        <configuration>
+                            <!-- Your local database connection -->
+                            <jdbc>
+                                <url>jdbc:postgresql://localhost:5432/carely</url>
+                                <user>postgres</user>
+                                <password>postgres</password>
+                            </jdbc>
+
+                            <generator>
+                                <database>
+                                    <!-- Tell jOOQ this is PostgreSQL -->
+                                    <name>org.jooq.meta.postgres.PostgresDatabase</name>
+
+                                    <!-- PostgreSQL schema -->
+                                    <inputSchema>public</inputSchema>
+
+                                    <!-- Generate only the users table -->
+                                    <includes>users</includes>
+                                </database>
+
+                                <target>
+                                    <!-- Package for generated Java files -->
+                                    <packageName>com.carely.jooq.generated</packageName>
+
+                                    <!-- Where generated files are placed -->
+                                    <directory>
+                                        ${project.build.directory}/generated-sources/jooq
+                                    </directory>
+                                </target>
+                            </generator>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>
