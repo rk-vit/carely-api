@@ -1,14 +1,25 @@
 package com.carely.users.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.carely.users.dto.CreateUserRequest;
+import com.carely.users.dto.CreateUserResponse;
+import com.carely.users.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/users")
 public class UserController {
-    @GetMapping("/users")
-    public String getUsers(){
-        return "ALl the users";
+    private final UserService userService;
+
+    public UserController(UserService userService){
+        this.userService = userService;
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CreateUserResponse createUser(@Valid @RequestBody CreateUserRequest req){
+        return userService.createUser(req);
     }
 
 }
