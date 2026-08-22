@@ -4,6 +4,7 @@ import com.carely.jooq.generated.tables.records.UsersRecord;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.carely.jooq.generated.tables.Users.USERS;
@@ -25,7 +26,11 @@ public class UserRepository {
         );
     }
 
-        public UsersRecord insertUser( UUID id,
+    public Optional<UsersRecord> findByEmail(String email){
+        return dsl.selectFrom(USERS).where(USERS.EMAIL.eq(email)).fetchOptional();
+    }
+
+    public UsersRecord insertUser( UUID id,
                                     String email,
                                     String passwordHash,
                                     String firstName,

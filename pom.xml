@@ -32,6 +32,7 @@
 		<module>db-migrations</module>
 		<module>jooq-generation</module>
 		<module>carely-users</module>
+		<module>carely-auth</module>
 	</modules>
 
 
