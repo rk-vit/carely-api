@@ -1,0 +1,7 @@
+.git
+.idea
+.vscode
+**/target/*
+!carely-server/target/carely-server-0.0.1-SNAPSHOT.jar
+node_modules
+.env
