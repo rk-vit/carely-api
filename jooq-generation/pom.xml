@@ -56,7 +56,7 @@
                                     <inputSchema>public</inputSchema>
 
                                     <!-- Generate only the users table -->
-                                    <includes>users|doctors</includes>
+                                    <includes>users|doctors|doctor_leave_requests</includes>
                                 </database>
 
                                 <target>

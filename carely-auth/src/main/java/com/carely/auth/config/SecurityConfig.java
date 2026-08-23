@@ -26,8 +26,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/logout").authenticated()
-                          .requestMatchers("/admin/doctors", "/admin/doctors/**").hasRole("ADMIN")
-                          .requestMatchers("/doctor/profile", "/doctor/profile/**").hasRole("DOCTOR")
+                        .requestMatchers("/admin/doctors", "/admin/doctors/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/leave-requests", "/admin/leave-requests/**").hasRole("ADMIN")
+                        .requestMatchers("/doctor/profile", "/doctor/profile/**").hasRole("DOCTOR")
+                        .requestMatchers("/doctor/leave-requests", "/doctor/leave-requests/**").hasRole("DOCTOR")
                         .anyRequest().authenticated()
                 );
 
