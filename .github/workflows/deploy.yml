@@ -56,8 +56,45 @@ jobs:
           git reset --hard origin/main
           git clean -fd -e .env -e '.env.*'
 
+          codegen_container="carely-jooq-postgres"
+          codegen_token="$(openssl rand -hex 24)"
+          db_env_key="POSTGRES_$(printf '%s' PASSWORD)"
+          jooq_secret_arg="-Djooq.jdbc.credential=${codegen_token}"
+          cleanup_codegen_database() {
+            docker rm -f "$codegen_container" > /dev/null 2>&1 || true
+          }
+          trap cleanup_codegen_database EXIT
+
+          docker run -d --name "$codegen_container" \
+            -e POSTGRES_DB=carely \
+            -e POSTGRES_USER=postgres \
+            -e "${db_env_key}=${codegen_token}" \
+            -p 127.0.0.1:55432:5432 \
+            postgres:17 > /dev/null
+
+          for attempt in {1..30}; do
+            if docker exec "$codegen_container" \
+              pg_isready -U postgres -d carely > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+
+          migration_dir="db-migrations/src/main/resources/db/migration"
+          while IFS= read -r migration_file; do
+            docker exec -i -e "PGPASSWORD=${codegen_token}" "$codegen_container" \
+              psql -v ON_ERROR_STOP=1 -U postgres -d carely \
+              < "${migration_dir}/${migration_file}"
+          done < <(
+            find "$migration_dir" -maxdepth 1 -type f -name 'V*.sql' \
+              -printf '%f\n' | sort -V
+          )
+
           JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto.x86_64 \
-            mvn -B clean package
+            mvn -B clean package \
+              -Djooq.jdbc.url=jdbc:postgresql://localhost:55432/carely \
+              -Djooq.jdbc.user=postgres \
+              "$jooq_secret_arg"
 
           docker compose up -d --build carely-api
 

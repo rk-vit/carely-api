@@ -24,6 +24,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<maven.compiler.release>21</maven.compiler.release>
+		<jooq.jdbc.url>jdbc:postgresql://localhost:5432/carely</jooq.jdbc.url>
+		<jooq.jdbc.user>postgres</jooq.jdbc.user>
+		<jooq.jdbc.credential>${env.CARELY_DB_TOKEN}</jooq.jdbc.credential>
 	</properties>
 
 	<!-- Child modules -->
