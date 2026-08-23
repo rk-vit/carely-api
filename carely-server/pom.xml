@@ -82,6 +82,12 @@
             <artifactId>carely-auth</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.carely</groupId>
+            <artifactId>carely-doctors</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

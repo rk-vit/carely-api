@@ -58,6 +58,27 @@ public class UserService {
         );
     }
 
+    @Transactional
+    public UsersRecord createDoctorUser(String email,
+                                         String rawPassword,
+                                         String firstName,
+                                         String lastName,
+                                         String phoneNumber) {
+        String normalizedEmail = normalizeEmail(email);
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
+        }
+
+        return userRepository.insertDoctorUser(
+                UUID.randomUUID(),
+                normalizedEmail,
+                passwordEncoder.encode(rawPassword),
+                firstName.trim(),
+                lastName.trim(),
+                normalizePhoneNumber(phoneNumber)
+        );
+    }
+
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase();
     }

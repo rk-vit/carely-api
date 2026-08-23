@@ -50,5 +50,25 @@ public class UserRepository {
                 .fetchOne();
     }
 
+    public UsersRecord insertDoctorUser(UUID id,
+                                         String email,
+                                         String passwordHash,
+                                         String firstName,
+                                         String lastName,
+                                         String phoneNumber) {
+        return dsl.insertInto(USERS)
+                .set(USERS.ID, id)
+                .set(USERS.EMAIL, email)
+                .set(USERS.PASSWORD_HASH, passwordHash)
+                .set(USERS.FIRST_NAME, firstName)
+                .set(USERS.LAST_NAME, lastName)
+                .set(USERS.PHONE_NUMBER, phoneNumber)
+                .set(USERS.ROLE, "DOCTOR")
+                .set(USERS.STATUS, "ACTIVE")
+                .set(USERS.EMAIL_VERIFIED, true)
+                .returning()
+                .fetchOne();
+    }
+
 
 }
