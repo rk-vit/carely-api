@@ -89,4 +89,4 @@ jobs:
           )
 
       - name: Build and test backend
-        run: mvn -B clean verify -Dspring.flyway.enabled=false
+        run: mvn -B clean verify -Dspring.flyway.enabled=false -Djooq.jdbc.credential="$PGPASSWORD"

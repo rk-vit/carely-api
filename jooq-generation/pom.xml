@@ -42,9 +42,9 @@
                         <configuration>
                             <!-- Your local database connection -->
                             <jdbc>
-                                <url>jdbc:postgresql://localhost:5432/carely</url>
-                                <user>postgres</user>
-                                <password>postgres</password>
+                                <url>${jooq.jdbc.url}</url>
+                                <user>${jooq.jdbc.user}</user>
+                                <password>${jooq.jdbc.credential}</password>
                             </jdbc>
 
                             <generator>
