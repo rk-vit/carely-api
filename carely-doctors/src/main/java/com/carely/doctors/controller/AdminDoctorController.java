@@ -25,6 +25,7 @@ public class AdminDoctorController {
         return doctorService.createDoctor(request);
     }
 
+
     @GetMapping("/{id}")
     public DoctorResponse get(@PathVariable UUID id) {
         return doctorService.getDoctor(id);
