@@ -142,6 +142,7 @@ public class AvailabilityService {
                 .map(o -> new TimeRange(o.getStartTime(), o.getEndTime())).toList();
 
         ZoneId zone = normal == null ? ZoneOffset.UTC : ZoneId.of(normal.getTimezone());
+        OffsetDateTime now = OffsetDateTime.now(zone);
         List<SlotResponse> result = new ArrayList<>();
         for (TimeRange range : available) {
             for (LocalTime start = range.start(); !start.plusMinutes(SLOT_MINUTES).isAfter(range.end());
@@ -151,6 +152,9 @@ public class AvailabilityService {
                 boolean isBlocked = blocked.stream().anyMatch(b -> overlaps(slotStart, end, b.start(), b.end()));
                 OffsetDateTime startAt = LocalDateTime.of(date, start).atZone(zone).toOffsetDateTime();
                 OffsetDateTime endAt = LocalDateTime.of(date, end).atZone(zone).toOffsetDateTime();
+                if (!startAt.isAfter(now)) {
+                    continue;
+                }
                 result.add(new SlotResponse(startAt, endAt, isBlocked ? "BLOCKED" : "AVAILABLE"));
             }
         }
