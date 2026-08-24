@@ -5,14 +5,28 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.jooq.Field;
+import org.jooq.Table;
+import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.name;
+import static org.jooq.impl.DSL.table;
 
 import static com.carely.jooq.generated.tables.Appointments.APPOINTMENTS;
 
 @Repository
 public class AppointmentRepository {
+    private static final Table<?> VISIT_CONSULTATIONS = table(name("visit_consultations"));
+    private static final Field<UUID> CONSULTATION_APPOINTMENT_ID = field(name("visit_consultations", "appointment_id"), UUID.class);
+    private static final Field<String> CONSULTATION_NOTES = field(name("visit_consultations", "clinical_notes"), String.class);
+    private static final Field<String> CONSULTATION_DIAGNOSIS = field(name("visit_consultations", "diagnosis"), String.class);
+    private static final Field<String> CONSULTATION_PRESCRIPTION = field(name("visit_consultations", "prescription"), String.class);
+    private static final Field<String> CONSULTATION_SUMMARY = field(name("visit_consultations", "summary"), String.class);
+    private static final Field<LocalDate> CONSULTATION_FOLLOW_UP = field(name("visit_consultations", "follow_up_date"), LocalDate.class);
+    private static final Field<OffsetDateTime> CONSULTATION_UPDATED_AT = field(name("visit_consultations", "updated_at"), OffsetDateTime.class);
     private final DSLContext dsl;
 
     public AppointmentRepository(DSLContext dsl) {
@@ -110,6 +124,32 @@ public class AppointmentRepository {
                 .returning()
                 .fetchOne();
     }
+
+    public Optional<ConsultationRow> findConsultation(UUID appointmentId) {
+        return dsl.select(CONSULTATION_NOTES, CONSULTATION_DIAGNOSIS, CONSULTATION_PRESCRIPTION,
+                        CONSULTATION_SUMMARY, CONSULTATION_FOLLOW_UP, CONSULTATION_UPDATED_AT)
+                .from(VISIT_CONSULTATIONS).where(CONSULTATION_APPOINTMENT_ID.eq(appointmentId))
+                .fetchOptional().map(row -> new ConsultationRow(row.value1(), row.value2(), row.value3(),
+                        row.value4(), row.value5(), row.value6()));
+    }
+
+    public void upsertConsultation(UUID appointmentId, String notes, String diagnosis, String prescription,
+                                   String summary, LocalDate followUpDate) {
+        int updated = dsl.update(VISIT_CONSULTATIONS)
+                .set(CONSULTATION_NOTES, notes).set(CONSULTATION_DIAGNOSIS, diagnosis)
+                .set(CONSULTATION_PRESCRIPTION, prescription).set(CONSULTATION_SUMMARY, summary)
+                .set(CONSULTATION_FOLLOW_UP, followUpDate).set(CONSULTATION_UPDATED_AT, OffsetDateTime.now())
+                .where(CONSULTATION_APPOINTMENT_ID.eq(appointmentId)).execute();
+        if (updated == 0) {
+            dsl.insertInto(VISIT_CONSULTATIONS).set(CONSULTATION_APPOINTMENT_ID, appointmentId)
+                    .set(CONSULTATION_NOTES, notes).set(CONSULTATION_DIAGNOSIS, diagnosis)
+                    .set(CONSULTATION_PRESCRIPTION, prescription).set(CONSULTATION_SUMMARY, summary)
+                    .set(CONSULTATION_FOLLOW_UP, followUpDate).execute();
+        }
+    }
+
+    public record ConsultationRow(String clinicalNotes, String diagnosis, String prescription,
+                                  String summary, LocalDate followUpDate, OffsetDateTime updatedAt) {}
 
     private void deleteExpiredHolds() {
         dsl.deleteFrom(APPOINTMENTS)

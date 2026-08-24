@@ -2,6 +2,8 @@ package com.carely.users.controller;
 
 import com.carely.users.dto.CreateUserRequest;
 import com.carely.users.dto.CreateUserResponse;
+import com.carely.users.dto.PatientProfileResponse;
+import com.carely.users.dto.UpdatePatientProfileRequest;
 import com.carely.users.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,17 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public CreateUserResponse createUser(@Valid @RequestBody CreateUserRequest req){
         return userService.createUser(req);
+    }
+
+    @GetMapping("/patient/profile")
+    public PatientProfileResponse patientProfile(java.security.Principal principal) {
+        return userService.getPatientProfile(principal.getName());
+    }
+
+    @PatchMapping("/patient/profile")
+    public PatientProfileResponse updatePatientProfile(java.security.Principal principal,
+                                                       @Valid @RequestBody UpdatePatientProfileRequest request) {
+        return userService.updatePatientProfile(principal.getName(), request);
     }
 
 }
