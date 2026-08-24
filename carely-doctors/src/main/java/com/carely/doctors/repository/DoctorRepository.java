@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static com.carely.jooq.generated.tables.Doctors.DOCTORS;
@@ -94,6 +95,24 @@ public class DoctorRepository {
                 .join(USERS).on(USERS.ID.eq(DOCTORS.USER_ID))
                 .where(USERS.EMAIL.eq(email))
                 .fetchOptional()
+                .map(row -> new DoctorResponseRow(row.value1(), row.value2(), row.value3(), row.value4(),
+                        row.value5(), row.value6(), row.value7(), row.value8(), row.value9(), row.value10(),
+                        row.value11(), row.value12(), row.value13(), row.value14(), row.value15()));
+    }
+
+    public List<DoctorResponseRow> findAllResponses() {
+        return dsl.select(
+                        DOCTORS.ID, DOCTORS.USER_ID, USERS.EMAIL, USERS.FIRST_NAME,
+                        USERS.LAST_NAME, USERS.PHONE_NUMBER, DOCTORS.SPECIALIZATION,
+                        DOCTORS.MEDICAL_LICENSE_NUMBER, DOCTORS.YEARS_OF_EXPERIENCE,
+                        DOCTORS.CONSULTATION_FEE, DOCTORS.BIOGRAPHY,
+                        DOCTORS.WORKING_START_TIME, DOCTORS.WORKING_END_TIME,
+                        DOCTORS.SLOT_DURATION_MINUTES, DOCTORS.ACTIVE
+                )
+                .from(DOCTORS)
+                .join(USERS).on(USERS.ID.eq(DOCTORS.USER_ID))
+                .orderBy(USERS.LAST_NAME.asc(), USERS.FIRST_NAME.asc())
+                .fetch()
                 .map(row -> new DoctorResponseRow(row.value1(), row.value2(), row.value3(), row.value4(),
                         row.value5(), row.value6(), row.value7(), row.value8(), row.value9(), row.value10(),
                         row.value11(), row.value12(), row.value13(), row.value14(), row.value15()));
