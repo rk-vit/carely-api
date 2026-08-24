@@ -10,8 +10,8 @@
 - [x] Prevent double-booking with a transaction and PostgreSQL overlap protection.
 - [x] Add a five-minute slot hold and expiry mechanism before confirmation.
 - [x] Add appointment statuses: `HELD`, `BOOKED`, `CANCELLED`, `COMPLETED`, and `NO_SHOW`.
-- [ ] Implement patient/doctor/admin appointment views.
-- [ ] Implement cancellation and rescheduling.
+- [x] Implement patient/doctor/admin appointment views.
+- [x] Implement cancellation and rescheduling.
 - [ ] Replace frontend appointment mocks with real API calls.
 
 ### AI visit summaries

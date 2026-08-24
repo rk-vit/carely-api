@@ -2,6 +2,7 @@ package com.carely.appointments.service;
 
 import com.carely.appointments.dto.AppointmentResponse;
 import com.carely.appointments.dto.CreateAppointmentRequest;
+import com.carely.appointments.dto.RescheduleAppointmentRequest;
 import com.carely.appointments.repository.AppointmentRepository;
 import com.carely.doctors.service.AvailabilityService;
 import com.carely.doctors.service.DoctorService;
@@ -104,6 +105,66 @@ public class AppointmentService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public AppointmentResponse cancel(UUID appointmentId, String patientEmail) {
+        requireOwnedAppointment(appointmentId, patientEmail);
+        AppointmentsRecord cancelled = appointmentRepository.cancel(appointmentId);
+        if (cancelled == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only held or booked appointments can be cancelled");
+        }
+        return toResponse(cancelled);
+    }
+
+    @Transactional
+    public AppointmentResponse reschedule(UUID appointmentId, String patientEmail, RescheduleAppointmentRequest request) {
+        AppointmentsRecord current = requireOwnedAppointment(appointmentId, patientEmail);
+        validateRequestedSlot(new CreateAppointmentRequest(current.getDoctorId(), request.startAt(), request.endAt(), current.getSymptoms()));
+        boolean available = availabilityService.slots(current.getDoctorId(), request.startAt().toLocalDate()).stream()
+                .anyMatch(slot -> slot.startAt().toInstant().equals(request.startAt().toInstant())
+                        && slot.endAt().toInstant().equals(request.endAt().toInstant())
+                        && "AVAILABLE".equals(slot.status()));
+        if (!available) throw new ResponseStatusException(HttpStatus.CONFLICT, "Selected slot is unavailable");
+        try {
+            AppointmentsRecord moved = appointmentRepository.reschedule(appointmentId, request.startAt(), request.endAt());
+            if (moved == null) throw new ResponseStatusException(HttpStatus.CONFLICT, "Only booked appointments can be rescheduled");
+            return toResponse(moved);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Selected slot was just booked by another patient");
+        }
+    }
+
+    @Transactional
+    public AppointmentResponse updateDoctorStatus(UUID appointmentId, String doctorEmail, String status) {
+        UUID doctorId = doctorService.getDoctorByEmail(doctorEmail).id();
+        AppointmentsRecord appointment = requireAppointment(appointmentId);
+        if (!doctorId.equals(appointment.getDoctorId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Appointment does not belong to you");
+        return updateStatus(appointmentId, status);
+    }
+
+    @Transactional
+    public AppointmentResponse updateAdminStatus(UUID appointmentId, String status) {
+        requireAppointment(appointmentId);
+        return updateStatus(appointmentId, status);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> allAppointments() {
+        return appointmentRepository.findAll().stream().map(this::toResponse).toList();
+    }
+
+    private AppointmentResponse updateStatus(UUID appointmentId, String status) {
+        if (!List.of("CANCELLED", "COMPLETED", "NO_SHOW").contains(status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported appointment status");
+        }
+        AppointmentsRecord updated = appointmentRepository.updateStatus(appointmentId, status);
+        return toResponse(updated);
+    }
+
+    private AppointmentsRecord requireAppointment(UUID appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
     }
 
     private UsersRecord requirePatient(String email) {
