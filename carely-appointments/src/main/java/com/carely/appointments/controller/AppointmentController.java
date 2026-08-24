@@ -3,6 +3,7 @@ package com.carely.appointments.controller;
 import com.carely.appointments.dto.AppointmentResponse;
 import com.carely.appointments.dto.CreateAppointmentRequest;
 import com.carely.appointments.dto.RescheduleAppointmentRequest;
+import com.carely.appointments.dto.ConsultationResponse;
 import com.carely.appointments.service.AppointmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,11 @@ public class AppointmentController {
     public AppointmentResponse reschedule(Principal principal, @PathVariable UUID id,
                                            @Valid @RequestBody RescheduleAppointmentRequest request) {
         return appointmentService.reschedule(id, principal.getName(), request);
+    }
+
+    @GetMapping("/{id}/consultation")
+    public ConsultationResponse consultation(Principal principal, @PathVariable UUID id) {
+        return appointmentService.getConsultationForPatient(id, principal.getName());
     }
 
     @GetMapping("/mine")

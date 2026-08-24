@@ -3,12 +3,16 @@ package com.carely.appointments.service;
 import com.carely.appointments.dto.AppointmentResponse;
 import com.carely.appointments.dto.CreateAppointmentRequest;
 import com.carely.appointments.dto.RescheduleAppointmentRequest;
+import com.carely.appointments.dto.ConsultationRequest;
+import com.carely.appointments.dto.ConsultationResponse;
 import com.carely.appointments.repository.AppointmentRepository;
 import com.carely.doctors.service.AvailabilityService;
 import com.carely.doctors.service.DoctorService;
 import com.carely.jooq.generated.tables.records.AppointmentsRecord;
 import com.carely.jooq.generated.tables.records.UsersRecord;
 import com.carely.users.repository.UserRepository;
+import com.carely.users.dto.PatientProfileResponse;
+import com.carely.users.service.UserService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,15 +33,18 @@ public class AppointmentService {
     private final UserRepository userRepository;
     private final AvailabilityService availabilityService;
     private final DoctorService doctorService;
+    private final UserService userService;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               UserRepository userRepository,
                               AvailabilityService availabilityService,
-                              DoctorService doctorService) {
+                              DoctorService doctorService,
+                              UserService userService) {
         this.appointmentRepository = appointmentRepository;
         this.userRepository = userRepository;
         this.availabilityService = availabilityService;
         this.doctorService = doctorService;
+        this.userService = userService;
     }
 
     @Transactional
@@ -153,6 +160,43 @@ public class AppointmentService {
     public List<AppointmentResponse> allAppointments() {
         return appointmentRepository.findAll().stream().map(this::toResponse).toList();
     }
+
+    @Transactional(readOnly = true)
+    public PatientProfileResponse patientProfileForDoctor(UUID appointmentId, String doctorEmail) {
+        UUID doctorId = doctorService.getDoctorByEmail(doctorEmail).id();
+        AppointmentsRecord appointment = requireAppointment(appointmentId);
+        if (!doctorId.equals(appointment.getDoctorId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Appointment does not belong to you");
+        }
+        return userService.getPatientProfile(appointment.getPatientId());
+    }
+
+    @Transactional
+    public ConsultationResponse submitConsultation(UUID appointmentId, String doctorEmail, ConsultationRequest request) {
+        UUID doctorId = doctorService.getDoctorByEmail(doctorEmail).id();
+        AppointmentsRecord appointment = requireAppointment(appointmentId);
+        if (!doctorId.equals(appointment.getDoctorId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Appointment does not belong to you");
+        if (!List.of("BOOKED", "COMPLETED").contains(appointment.getStatus())) throw new ResponseStatusException(HttpStatus.CONFLICT, "This appointment cannot receive consultation notes");
+        appointmentRepository.upsertConsultation(appointmentId, request.clinicalNotes().trim(), clean(request.diagnosis()),
+                clean(request.prescription()), clean(request.summary()), request.followUpDate());
+        if ("BOOKED".equals(appointment.getStatus())) appointmentRepository.updateStatus(appointmentId, "COMPLETED");
+        return consultationResponse(appointmentId);
+    }
+
+    @Transactional(readOnly = true)
+    public ConsultationResponse getConsultationForPatient(UUID appointmentId, String patientEmail) {
+        AppointmentsRecord appointment = requireAppointment(appointmentId);
+        if (!appointment.getPatientId().equals(requirePatient(patientEmail).getId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Appointment does not belong to you");
+        return consultationResponse(appointmentId);
+    }
+
+    private ConsultationResponse consultationResponse(UUID appointmentId) {
+        return appointmentRepository.findConsultation(appointmentId)
+                .map(row -> new ConsultationResponse(appointmentId, row.clinicalNotes(), row.diagnosis(), row.prescription(), row.summary(), row.followUpDate(), row.updatedAt()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Consultation has not been submitted"));
+    }
+
+    private String clean(String value) { return value == null || value.isBlank() ? null : value.trim(); }
 
     private AppointmentResponse updateStatus(UUID appointmentId, String status) {
         if (!List.of("CANCELLED", "COMPLETED", "NO_SHOW").contains(status)) {

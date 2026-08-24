@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/doctors", "/admin/doctors/**").hasRole("ADMIN")
                         .requestMatchers("/admin/leave-requests", "/admin/leave-requests/**").hasRole("ADMIN")
                         .requestMatchers("/admin/appointments", "/admin/appointments/**").hasRole("ADMIN")
+                        .requestMatchers("/users/patient/profile", "/users/patient/profile/**").hasRole("PATIENT")
                         .requestMatchers(HttpMethod.GET, "/doctors").hasAnyRole("PATIENT", "ADMIN")
                         .requestMatchers("/doctor/profile", "/doctor/profile/**").hasRole("DOCTOR")
                         .requestMatchers("/doctor/leave-requests", "/doctor/leave-requests/**").hasRole("DOCTOR")
