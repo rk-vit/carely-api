@@ -2,6 +2,7 @@ package com.carely.appointments.controller;
 
 import com.carely.appointments.dto.AppointmentResponse;
 import com.carely.appointments.dto.CreateAppointmentRequest;
+import com.carely.appointments.dto.RescheduleAppointmentRequest;
 import com.carely.appointments.service.AppointmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import java.security.Principal;
 import java.util.List;
@@ -36,6 +38,17 @@ public class AppointmentController {
     @PostMapping("/{id}/confirm")
     public AppointmentResponse confirm(Principal principal, @PathVariable UUID id) {
         return appointmentService.confirm(id, principal.getName());
+    }
+
+    @PostMapping("/{id}/cancel")
+    public AppointmentResponse cancel(Principal principal, @PathVariable UUID id) {
+        return appointmentService.cancel(id, principal.getName());
+    }
+
+    @PatchMapping("/{id}/reschedule")
+    public AppointmentResponse reschedule(Principal principal, @PathVariable UUID id,
+                                           @Valid @RequestBody RescheduleAppointmentRequest request) {
+        return appointmentService.reschedule(id, principal.getName(), request);
     }
 
     @GetMapping("/mine")

@@ -73,6 +73,44 @@ public class AppointmentRepository {
                 .fetch();
     }
 
+    public List<AppointmentsRecord> findAll() {
+        return dsl.selectFrom(APPOINTMENTS)
+                .orderBy(APPOINTMENTS.START_AT.asc())
+                .fetch();
+    }
+
+    public AppointmentsRecord cancel(UUID id) {
+        return dsl.update(APPOINTMENTS)
+                .set(APPOINTMENTS.STATUS, "CANCELLED")
+                .set(APPOINTMENTS.HOLD_EXPIRES_AT, (OffsetDateTime) null)
+                .set(APPOINTMENTS.UPDATED_AT, OffsetDateTime.now())
+                .where(APPOINTMENTS.ID.eq(id))
+                .and(APPOINTMENTS.STATUS.in("HELD", "BOOKED"))
+                .returning()
+                .fetchOne();
+    }
+
+    public AppointmentsRecord reschedule(UUID id, OffsetDateTime startAt, OffsetDateTime endAt) {
+        return dsl.update(APPOINTMENTS)
+                .set(APPOINTMENTS.START_AT, startAt)
+                .set(APPOINTMENTS.END_AT, endAt)
+                .set(APPOINTMENTS.UPDATED_AT, OffsetDateTime.now())
+                .where(APPOINTMENTS.ID.eq(id))
+                .and(APPOINTMENTS.STATUS.eq("BOOKED"))
+                .returning()
+                .fetchOne();
+    }
+
+    public AppointmentsRecord updateStatus(UUID id, String status) {
+        return dsl.update(APPOINTMENTS)
+                .set(APPOINTMENTS.STATUS, status)
+                .set(APPOINTMENTS.HOLD_EXPIRES_AT, (OffsetDateTime) null)
+                .set(APPOINTMENTS.UPDATED_AT, OffsetDateTime.now())
+                .where(APPOINTMENTS.ID.eq(id))
+                .returning()
+                .fetchOne();
+    }
+
     private void deleteExpiredHolds() {
         dsl.deleteFrom(APPOINTMENTS)
                 .where(APPOINTMENTS.STATUS.eq("HELD"))
