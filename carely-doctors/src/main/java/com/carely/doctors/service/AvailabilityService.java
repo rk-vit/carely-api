@@ -100,6 +100,19 @@ public class AvailabilityService {
 
         DoctorAvailabilityRecord normal = availabilityRepository
                 .findAvailability(doctorId, request.date().getDayOfWeek()).orElse(null);
+        ZoneId overrideZone = normal == null ? ZoneOffset.UTC : ZoneId.of(normal.getTimezone());
+        OffsetDateTime overrideDayStart = request.date().atStartOfDay(overrideZone).toOffsetDateTime();
+        OffsetDateTime overrideDayEnd = request.date().plusDays(1).atStartOfDay(overrideZone).toOffsetDateTime();
+        boolean overlapsAppointment = availabilityRepository
+                .findActiveAppointments(doctorId, overrideDayStart, overrideDayEnd)
+                .stream()
+                .anyMatch(appointment -> overlaps(
+                        request.startTime(), request.endTime(),
+                        appointment.getStartAt().atZoneSameInstant(overrideZone).toLocalTime(),
+                        appointment.getEndAt().atZoneSameInstant(overrideZone).toLocalTime()));
+        if (overlapsAppointment) {
+            throw conflict("This time already contains a patient appointment.");
+        }
         if (request.type() == AvailabilityOverrideRequest.OverrideType.BLOCKED) {
             if (normal == null || request.startTime().isBefore(normal.getStartTime())
                     || request.endTime().isAfter(normal.getEndTime())) {
@@ -143,6 +156,15 @@ public class AvailabilityService {
 
         ZoneId zone = normal == null ? ZoneOffset.UTC : ZoneId.of(normal.getTimezone());
         OffsetDateTime now = OffsetDateTime.now(zone);
+        OffsetDateTime dayStart = date.atStartOfDay(zone).toOffsetDateTime();
+        OffsetDateTime dayEnd = date.plusDays(1).atStartOfDay(zone).toOffsetDateTime();
+        List<TimeRange> booked = availabilityRepository
+                .findActiveAppointments(doctorId, dayStart, dayEnd)
+                .stream()
+                .map(appointment -> new TimeRange(
+                        appointment.getStartAt().atZoneSameInstant(zone).toLocalTime(),
+                        appointment.getEndAt().atZoneSameInstant(zone).toLocalTime()))
+                .toList();
         List<SlotResponse> result = new ArrayList<>();
         for (TimeRange range : available) {
             for (LocalTime start = range.start(); !start.plusMinutes(SLOT_MINUTES).isAfter(range.end());
@@ -150,12 +172,14 @@ public class AvailabilityService {
                 LocalTime end = start.plusMinutes(SLOT_MINUTES);
                 LocalTime slotStart = start;
                 boolean isBlocked = blocked.stream().anyMatch(b -> overlaps(slotStart, end, b.start(), b.end()));
+                boolean isBooked = booked.stream().anyMatch(b -> overlaps(slotStart, end, b.start(), b.end()));
                 OffsetDateTime startAt = LocalDateTime.of(date, start).atZone(zone).toOffsetDateTime();
                 OffsetDateTime endAt = LocalDateTime.of(date, end).atZone(zone).toOffsetDateTime();
                 if (!startAt.isAfter(now)) {
                     continue;
                 }
-                result.add(new SlotResponse(startAt, endAt, isBlocked ? "BLOCKED" : "AVAILABLE"));
+                result.add(new SlotResponse(startAt, endAt,
+                        isBooked ? "BOOKED" : isBlocked ? "BLOCKED" : "AVAILABLE"));
             }
         }
         result.sort(Comparator.comparing(SlotResponse::startAt));

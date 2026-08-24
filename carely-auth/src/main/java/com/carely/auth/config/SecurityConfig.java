@@ -30,6 +30,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/leave-requests", "/admin/leave-requests/**").hasRole("ADMIN")
                         .requestMatchers("/doctor/profile", "/doctor/profile/**").hasRole("DOCTOR")
                         .requestMatchers("/doctor/leave-requests", "/doctor/leave-requests/**").hasRole("DOCTOR")
+                        .requestMatchers("/appointments/doctor").hasRole("DOCTOR")
+                        .requestMatchers("/appointments/**").hasRole("PATIENT")
                         .anyRequest().authenticated()
                 );
 

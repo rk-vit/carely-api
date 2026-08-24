@@ -56,7 +56,7 @@
                                     <inputSchema>public</inputSchema>
 
                                     <!-- Generate only the tables used by the application -->
-                                    <includes>users|doctors|doctor_leave_requests|doctor_availability|doctor_availability_override</includes>
+                                    <includes>users|doctors|doctor_leave_requests|doctor_availability|doctor_availability_override|appointments</includes>
                                 </database>
 
                                 <target>

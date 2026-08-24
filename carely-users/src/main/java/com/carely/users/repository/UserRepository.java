@@ -30,6 +30,10 @@ public class UserRepository {
         return dsl.selectFrom(USERS).where(USERS.EMAIL.eq(email)).fetchOptional();
     }
 
+    public Optional<UsersRecord> findById(UUID id) {
+        return dsl.selectFrom(USERS).where(USERS.ID.eq(id)).fetchOptional();
+    }
+
     public UsersRecord insertUser( UUID id,
                                     String email,
                                     String passwordHash,

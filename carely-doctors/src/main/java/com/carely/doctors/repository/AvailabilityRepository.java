@@ -2,6 +2,7 @@ package com.carely.doctors.repository;
 
 import com.carely.jooq.generated.tables.records.DoctorAvailabilityOverrideRecord;
 import com.carely.jooq.generated.tables.records.DoctorAvailabilityRecord;
+import com.carely.jooq.generated.tables.records.AppointmentsRecord;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import static com.carely.jooq.generated.tables.DoctorAvailability.DOCTOR_AVAILABILITY;
 import static com.carely.jooq.generated.tables.DoctorAvailabilityOverride.DOCTOR_AVAILABILITY_OVERRIDE;
+import static com.carely.jooq.generated.tables.Appointments.APPOINTMENTS;
 
 @Repository
 public class AvailabilityRepository {
@@ -99,5 +101,16 @@ public class AvailabilityRepository {
                 .where(DOCTOR_AVAILABILITY_OVERRIDE.ID.eq(overrideId))
                 .and(DOCTOR_AVAILABILITY_OVERRIDE.DOCTOR_ID.eq(doctorId))
                 .execute();
+    }
+
+    public List<AppointmentsRecord> findActiveAppointments(UUID doctorId,
+                                                            java.time.OffsetDateTime from,
+                                                            java.time.OffsetDateTime until) {
+        return dsl.selectFrom(APPOINTMENTS)
+                .where(APPOINTMENTS.DOCTOR_ID.eq(doctorId))
+                .and(APPOINTMENTS.STATUS.in("HELD", "BOOKED"))
+                .and(APPOINTMENTS.START_AT.lt(until))
+                .and(APPOINTMENTS.END_AT.gt(from))
+                .fetch();
     }
 }

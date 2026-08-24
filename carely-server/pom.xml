@@ -88,6 +88,7 @@
             <artifactId>carely-doctors</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency><groupId>com.carely</groupId><artifactId>carely-appointments</artifactId><version>${project.version}</version></dependency>
     </dependencies>
 
     <build>
