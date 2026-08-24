@@ -2,6 +2,7 @@ package com.carely.doctors.service;
 
 import com.carely.doctors.dto.CreateDoctorRequest;
 import com.carely.doctors.dto.DoctorResponse;
+import com.carely.doctors.dto.DoctorDirectoryResponse;
 import com.carely.doctors.dto.UpdateDoctorRequest;
 import com.carely.doctors.repository.DoctorRepository;
 import com.carely.jooq.generated.tables.records.DoctorsRecord;
@@ -14,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.List;
 
 @Service
 public class DoctorService {
@@ -69,6 +71,14 @@ public class DoctorService {
     public DoctorResponse getDoctorByEmail(String email) {
         return doctorRepository.findResponseByEmail(email).map(this::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor profile not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<DoctorDirectoryResponse> listDoctors() {
+        return doctorRepository.findAllResponses().stream().map(row -> new DoctorDirectoryResponse(
+                row.id(), row.firstName(), row.lastName(), row.specialization(), row.yearsOfExperience(),
+                row.consultationFee(), row.biography(), row.workingStartTime(), row.workingEndTime(),
+                row.slotDurationMinutes(), row.active())).toList();
     }
 
     private DoctorResponse toResponse(DoctorRepository.DoctorResponseRow row) {

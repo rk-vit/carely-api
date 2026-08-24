@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/logout").authenticated()
                         .requestMatchers("/admin/doctors", "/admin/doctors/**").hasRole("ADMIN")
                         .requestMatchers("/admin/leave-requests", "/admin/leave-requests/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/doctors").hasAnyRole("PATIENT", "ADMIN")
                         .requestMatchers("/doctor/profile", "/doctor/profile/**").hasRole("DOCTOR")
                         .requestMatchers("/doctor/leave-requests", "/doctor/leave-requests/**").hasRole("DOCTOR")
                         .requestMatchers("/appointments/doctor").hasRole("DOCTOR")
