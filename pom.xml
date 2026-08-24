@@ -36,7 +36,8 @@
 		<module>jooq-generation</module>
 		<module>carely-users</module>
 		<module>carely-auth</module>
-		<module>carely-doctors</module>
+        <module>carely-doctors</module>
+        <module>carely-appointments</module>
 	</modules>
 
 
